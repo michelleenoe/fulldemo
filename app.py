@@ -11,8 +11,8 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
-##############################
 
+##############################
 @app.after_request
 def disable_cache(response):
     """
@@ -24,118 +24,122 @@ def disable_cache(response):
     response.headers["Expires"] = "0"
     return response
 
-##############################
-## index 
 
+##############################
 @app.get("/")
 def show_index():
     try:
-        ##variables - python capital F
         is_session = False
         if session.get("user"): is_session = True
+
         active_index = "active"
 
-        return render_template("index.html", title="Home", is_session=is_session, active_index=active_index)
+        return render_template("index.html", is_session = is_session, active_index=active_index)
     
+
+
+
+        # db, cursor = x.db()
+        # q = """SELECT u.user_pk, u.user_name, GROUP_CONCAT(p.user_phone ORDER BY p.user_phone) AS phones FROM users u LEFT JOIN users_phones p ON u.user_pk = p.user_fk GROUP BY u.user_pk"""
+        # cursor.execute(q)
+        # rows = cursor.fetchall()
+        # ic(rows)
+        # for row in rows:
+        #     if row["phones"]:
+        #         row["user_phones"] = row["phones"].split(",")
+        #     else:
+        #         row["user_phones"] = []
+        # ic(rows)
+        # return render_template("index.html", title="Home", rows=rows)
     except Exception as ex:
         ic(ex)
         return "System under maintenance", 500
     finally:
-        pass
-        if "cursor" in locals():
-            cursor.close()
-        if "db" in locals():
-            db.close()
+        if "cursor" in locals(): cursor.close()
+        if "db" in locals(): db.close()
     
 
 ##############################
-
-@app.get("/contact-us")
-def show_contact_us():
-    active_contact_us = "active"
-    return render_template("contact-us.html", title="Contact us", active_contact_us=active_contact_us)
-
-##############################
-
-@app.get("/about-us")
-def show_about_us():
-    active_about_us = "active"
-    return render_template("about-us.html", title="About us", active_about_us=active_about_us)
-
-##############################
-
-@app.get("/signup")
-def show_signup():
-    active_signup = "active"
-    return render_template("signup.html", title="Signup us", active_signup=active_signup)
-
-##############################
-
-@app.get("/login")
-def show_login():
-    active_login = "active"
-    return render_template("login.html", title="Login", active_login=active_login)
-
-##############################
-
-app.post("/logout")
-def show_logout():
-    active_logout = "active"
+@app.get("/logout")
+def logout():
     session.pop("user")
-    return redirect(url_for("show_login"), active_logout=active_logout)
-
-##############################
+    return redirect(url_for("show_login"))
 
 @app.get("/items")
 def show_items():
     active_items = "active"
     return render_template("items.html", title="Items", active_items=active_items)
 
-##############################
 
+
+##############################
+@app.get("/contact-us")
+def show_contact_us():
+    active_contact_us = "active"
+    return render_template("contact-us.html", title="Contact us", active_contact_us=active_contact_us)
+
+##############################
+@app.get("/about-us")
+def show_about_us():
+    active_about_us = "active"
+    return render_template("about-us.html", title="About us", active_about_us=active_about_us)
+
+##############################
 @app.get("/profile")
-def show_profile():
+def profile():
     try:
-        is_session  = False
-        if session ["user"]: is_session = True
-        return render_template("profile.html", title="Profile", user=session["user"], is_session=is_session)
+        is_session = False
+        if session["user"]: is_session = True  
+        active_profile = "active"      
+        return render_template("profile.html", title="Profile", user=session["user"], is_session=is_session, active_profile=active_profile)
+        # user_name = session["user"]["user_name"]
+        # user_last_name = session["user"]["user_last_name"]
+        # return render_template("profile.html", title="Profile", user_name=user_name, user_last_name=user_last_name)
     except Exception as ex:
+        ic(ex)
         return redirect(url_for("show_login"))
     finally:
         pass
 
-# ##############################
 
-# backend
 
+
+##############################
+@app.get("/signup")
+def show_signup():
+    active_signup ="active"
+    return render_template("signup.html", title="Signup us", active_signup=active_signup)
+
+##############################
+@app.get("/login")
+def show_login():
+    active_login = "active"
+    return render_template("login.html", title="Login us", active_login=active_login)
+
+##############################
 @app.post("/login")
 def login():
     try:
-        # whenever you enter a route --> always validate!!
+        # MUST VALIDATE
         user_name = x.validate_user_name()
         db, cursor = x.db()
-        ## you'll never be hacked === %s
         q = "SELECT * FROM users WHERE user_name = %s"
         cursor.execute(q, (user_name,))
-        # fetch one = only get one 
-        user = cursor.fetchone() #{"user_pk": 1, "user_name"}
+        user = cursor.fetchone()
         ic(user)
-        #session variable (Session should be session to correctly set the session variable)
         session["user"] = user
-        # what if the user is not there ?? 
-        if not user: raise Exception("user not found")
-        return redirect(url_for(("show_profile")))
+        if not user: raise Exception("User not found")
+
+        return redirect(url_for("profile"))
     except Exception as ex:
         ic(ex)
-        ## make sure the expection is text
-        return str(ex), 400
+        return str(ex), 400 
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()  
 
 
 ##############################
-
 @app.get("/api/v1/items")
 def get_items():
     try:
@@ -150,6 +154,7 @@ def get_items():
     finally:
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()  
+
 
 
 ##############################
@@ -169,4 +174,5 @@ def delete_user(user_id):
         if "cursor" in locals(): cursor.close()
         if "db" in locals(): db.close()  
 
-##############################
+
+
